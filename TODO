@@ -1,0 +1,10 @@
+- Add a method to post data to EDDN.
+
+- Possibly handle filters in the parser rather than the ChannelInterface so
+  JSON parsing can be even lazier in the face of filters.
+
+- Write some tests!
+
+- Handle cases of previous versions of schemas
+
+- Possibly do schema validation, though this may not be necessary.
