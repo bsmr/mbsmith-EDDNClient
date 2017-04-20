@@ -2,12 +2,8 @@ package EDDNClient
 
 import (
 	"fmt"
-	"github.com/mbsmith/EDDNClient/blackmarket"
-	"github.com/mbsmith/EDDNClient/commodity"
-	"github.com/mbsmith/EDDNClient/journal"
-	"github.com/mbsmith/EDDNClient/outfitting"
-	"github.com/mbsmith/EDDNClient/shipyard"
 	zmq "github.com/pebbe/zmq4"
+	"time"
 )
 
 // Constants used internally by control methods to control the ChannelInterface
@@ -35,14 +31,14 @@ const (
 // respective types.  When a Done message is received all processing on the
 // receiver should halt as this means that the ChannelInterface is closed.
 type ChannelInterface struct {
-	Socket          *zmq.Socket             // Underlying ZeroMQ socket
-	JournalChan     <-chan journal.Root     // Channel for reading journal messages
-	ShipyardChan    <-chan shipyard.Root    // Channel for reading shipyard messages
-	CommodityChan   <-chan commodity.Root   // Channel for reading commodity messages
-	BlackmarketChan <-chan blackmarket.Root // Channel for reading blackmarket messages
-	OutfittingChan  <-chan outfitting.Root  // Channel for reading outfitting messages
-	ControlChan     chan<- int              // Channel providing control of the goroutine
-	Done            chan bool               // Sent when the ChannelInterface is finished.
+	Socket          *zmq.Socket        // Underlying ZeroMQ socket
+	JournalChan     <-chan Journal     // Channel for reading journal messages
+	ShipyardChan    <-chan Shipyard    // Channel for reading shipyard messages
+	CommodityChan   <-chan Commodity   // Channel for reading commodity messages
+	BlackmarketChan <-chan Blackmarket // Channel for reading blackmarket messages
+	OutfittingChan  <-chan Outfitting  // Channel for reading outfitting messages
+	ControlChan     chan<- int         // Channel providing control of the goroutine
+	Done            chan bool          // Sent when the ChannelInterface is finished.
 }
 
 // NewChannelInterface creates an active ChannelInterface using the provided
@@ -61,14 +57,15 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 		return nil, err
 	}
 
-	subscriber.Connect(EddnAddress)
+	subscriber.Connect(EDDNSubAddress)
 	subscriber.SetSubscribe("")
+	subscriber.SetConnectTimeout(time.Duration(600000))
 
-	journalChan := make(chan journal.Root)
-	shipyardChan := make(chan shipyard.Root)
-	commodityChan := make(chan commodity.Root)
-	blackmarketChan := make(chan blackmarket.Root)
-	outfittingChan := make(chan outfitting.Root)
+	journalChan := make(chan Journal)
+	shipyardChan := make(chan Shipyard)
+	commodityChan := make(chan Commodity)
+	blackmarketChan := make(chan Blackmarket)
+	outfittingChan := make(chan Outfitting)
 	controlChan := make(chan int, 1)
 	Done := make(chan bool)
 
@@ -109,34 +106,34 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 			}
 
 			switch Message.(type) {
-			case journal.Root:
+			case Journal:
 
 				if filter&FilterJournal == 0 {
-					journalChan <- Message.(journal.Root)
+					journalChan <- Message.(Journal)
 				}
 
-			case shipyard.Root:
+			case Shipyard:
 
 				if filter&FilterShipyard == 0 {
-					shipyardChan <- Message.(shipyard.Root)
+					shipyardChan <- Message.(Shipyard)
 				}
 
-			case commodity.Root:
+			case Commodity:
 
 				if filter&FilterCommodity == 0 {
-					commodityChan <- Message.(commodity.Root)
+					commodityChan <- Message.(Commodity)
 				}
 
-			case blackmarket.Root:
+			case Blackmarket:
 
 				if filter&FilterBlackmarket == 0 {
-					blackmarketChan <- Message.(blackmarket.Root)
+					blackmarketChan <- Message.(Blackmarket)
 				}
 
-			case outfitting.Root:
+			case Outfitting:
 
 				if filter&FilterOutfitting == 0 {
-					outfittingChan <- Message.(outfitting.Root)
+					outfittingChan <- Message.(Outfitting)
 				}
 
 			default:

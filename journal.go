@@ -1,12 +1,4 @@
-package journal
-
-// Header contains basic metadata about the message sent.
-type Header struct {
-	GatewayTimestamp string `json:"gatewayTimestamp,omitempty"`
-	SoftwareName     string `json:"softwareName"`
-	SoftwareVersion  string `json:"softwareVersion"`
-	UploaderID       string `json:"uploaderID"`
-}
+package EDDNClient
 
 // Ring describes planetary rings of a body that may or may not be included
 // in a journal message.
@@ -35,8 +27,8 @@ type Faction struct {
 	Name         string  `json:"Name"`
 }
 
-// Message contains the actual data sent to EDDN.
-type Message struct {
+// JournalMessage contains the journal data sent to EDDN.
+type JournalMessage struct {
 	AbsoluteMagnitude     float64       `json:"AbsoluteMagnitude,omitempty"`
 	AgeMy                 int           `json:"Age_MY,omitempty"`
 	Atmosphere            string        `json:"Atmosphere,omitempty"`
@@ -81,9 +73,9 @@ type Message struct {
 	Volcanism             string        `json:"Volcanism,omitempty"`
 }
 
-// Root is the high level type that contains the entire JSON message.
-type Root struct {
-	SchemaRef string  `json:"$schemaRef"`
-	Header    Header  `json:"header"`
-	Message   Message `json:"message"`
+// Journal is the high level type that contains the entire JSON message.
+type Journal struct {
+	SchemaRef string         `json:"$schemaRef"`
+	Header    Header         `json:"header"`
+	Message   JournalMessage `json:"message"`
 }

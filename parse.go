@@ -5,11 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mbsmith/EDDNClient/blackmarket"
-	"github.com/mbsmith/EDDNClient/commodity"
-	"github.com/mbsmith/EDDNClient/journal"
-	"github.com/mbsmith/EDDNClient/outfitting"
-	"github.com/mbsmith/EDDNClient/shipyard"
 	"io/ioutil"
 	"strings"
 )
@@ -62,12 +57,12 @@ func parseJSON(data string) (parsed interface{}, err error) {
 		return nil, err
 
 	case "http://schemas.elite-markets.net/eddn/commodity/3":
-		var commodityData commodity.Root
+		var commodityData Commodity
 		json.Unmarshal(output, &commodityData)
 		return commodityData, nil
 
 	case "http://schemas.elite-markets.net/eddn/journal/1":
-		var journalData journal.Root
+		var journalData Journal
 		json.Unmarshal(output, &journalData)
 		return journalData, nil
 
@@ -76,12 +71,12 @@ func parseJSON(data string) (parsed interface{}, err error) {
 		return nil, err
 
 	case "http://schemas.elite-markets.net/eddn/outfitting/2":
-		var outfittingData outfitting.Root
+		var outfittingData Outfitting
 		json.Unmarshal(output, &outfittingData)
 		return outfittingData, nil
 
 	case "http://schemas.elite-markets.net/eddn/blackmarket/1":
-		var blackmarketData blackmarket.Root
+		var blackmarketData Blackmarket
 		json.Unmarshal(output, &blackmarketData)
 		return blackmarketData, nil
 
@@ -90,7 +85,7 @@ func parseJSON(data string) (parsed interface{}, err error) {
 		return nil, err
 
 	case "http://schemas.elite-markets.net/eddn/shipyard/2":
-		var shipyardData shipyard.Root
+		var shipyardData Shipyard
 		json.Unmarshal(output, &shipyardData)
 		return shipyardData, nil
 

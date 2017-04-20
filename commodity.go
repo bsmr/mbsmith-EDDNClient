@@ -1,4 +1,4 @@
-package commodity
+package EDDNClient
 
 // Commodities describes various commodities sent in a Message.
 type Commodities struct {
@@ -13,25 +13,17 @@ type Commodities struct {
 	StockBracket  int      `json:"stockBracket"`
 }
 
-// Header contains basic metadata about the message sent.
-type Header struct {
-	GatewayTimestamp string `json:"gatewayTimestamp,omitempty"`
-	SoftwareName     string `json:"softwareName"`
-	SoftwareVersion  string `json:"softwareVersion"`
-	UploaderID       string `json:"uploaderID"`
-}
-
-// Message contains the actual data sent to EDDN.
-type Message struct {
+// CommodityMessage contains the commodity data sent to EDDN.
+type CommodityMessage struct {
 	Commodities []Commodities `json:"commodities"` // Required
 	StationName string        `json:"stationName"` // Required
 	SystemName  string        `json:"systemName"`  // Required
 	Timestamp   string        `json:"timestamp"`   // Required
 }
 
-// Root is the high level type that contains the entire JSON message.
-type Root struct {
-	SchemaRef string  `json:"$schemaRef"`
-	Header    Header  `json:"header"`
-	Message   Message `json:"message"`
+// Commodity is the high level type that contains the entire JSON message.
+type Commodity struct {
+	SchemaRef string           `json:"$schemaRef"`
+	Header    Header           `json:"header"`
+	Message   CommodityMessage `json:"message"`
 }
