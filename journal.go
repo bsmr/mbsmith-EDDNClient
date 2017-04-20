@@ -60,6 +60,7 @@ type JournalMessage struct {
 	StationGovernment     string        `json:"StationGovernment,omitempty"`
 	StationName           string        `json:"StationName,omitempty"`
 	StationType           string        `json:"StationType,omitempty"`
+	StellarMass           float32       `json:"StellarMass,omitempty"`
 	SurfaceTemperature    float64       `json:"SurfaceTemperature,omitempty"`
 	SurfaceGravity        float64       `json:"SurfaceGravity,omitempty"`
 	SurfacePressure       float64       `json:"SurfacePressure,omitempty"`
