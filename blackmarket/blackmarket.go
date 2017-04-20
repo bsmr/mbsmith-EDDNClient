@@ -10,12 +10,12 @@ type Header struct {
 
 // Message contains the actual data sent to EDDN.
 type Message struct {
-	Name        string `json:"name"`
-	Prohibited  bool   `json:"prohibited"`
-	SellPrice   int    `json:"sellPrice"`
-	StationName string `json:"stationName"`
-	SystemName  string `json:"systemName"`
-	Timestamp   string `json:"timestamp"`
+	Name        string `json:"name"`        // Required
+	Prohibited  bool   `json:"prohibited"`  // Required
+	SellPrice   int    `json:"sellPrice"`   // Required
+	StationName string `json:"stationName"` // Required
+	SystemName  string `json:"systemName"`  // Required
+	Timestamp   string `json:"timestamp"`   // Required
 }
 
 // Root is the high level type that contains the entire JSON message.
