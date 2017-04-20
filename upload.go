@@ -1,13 +1,14 @@
 package EDDNClient
 
 import (
-	"encoding/json"
-	//"github.com/xeipuuv/gojsonschema"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/xeipuuv/gojsonschema"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -20,12 +21,24 @@ const (
 	shipyardSchema    = iota
 )
 
+// Current schema URI's
+const bmSchemaURI = "https://raw.githubusercontent.com/jamesremuscat/EDDN/master/schemas/blackmarket-v1.0.json"
+const comSchemaURI = "https://raw.githubusercontent.com/jamesremuscat/EDDN/master/schemas/commodity-v3.0.json"
+const jSchemaURI = "https://raw.githubusercontent.com/jamesremuscat/EDDN/master/schemas/journal-v1.0.json"
+const outfSchemaURI = "https://raw.githubusercontent.com/jamesremuscat/EDDN/master/schemas/outfitting-v2.0.json"
+const shipSchemaURI = "https://raw.githubusercontent.com/jamesremuscat/EDDN/master/schemas/shipyard-v2.0.json"
+
 // Uploader is a helper type (required) that keeps track of the header, and
 // other potential portions of data that don't need to be regenerated after
 // each message.  It also updates its timestamp internally on each message
 // so it shouldn't ever be off time.
 type Uploader struct {
-	header Header // header represents the header portion of the JSON in each message.
+	header            Header               // header sent with each message.
+	blackmarketSchema *gojsonschema.Schema // JSON validation for blackmarket messages
+	commoditySchema   *gojsonschema.Schema // JSON validation for commodity messages
+	journalSchema     *gojsonschema.Schema // JSON validation for journal messages
+	outfittingSchema  *gojsonschema.Schema // JSON validation for outfitting messages
+	shipyardSchema    *gojsonschema.Schema // JSON validation for shipyard messages
 }
 
 // NewUploader creates a new Uploader that will be used to send various types
@@ -39,7 +52,33 @@ func NewUploader(uploaderID string, softwareName string,
 		return nil, err
 	}
 
-	return &Uploader{header}, nil
+	var e error
+
+	schemaLoad := func(uri string) *gojsonschema.Schema {
+		if e != nil {
+			return nil
+		}
+
+		loader := gojsonschema.NewReferenceLoader(uri)
+		var schema *gojsonschema.Schema
+		schema, e = gojsonschema.NewSchema(loader)
+
+		return schema
+	}
+
+	// Prepare various schemas for validation.
+	bmSchema := schemaLoad(bmSchemaURI)
+	comSchema := schemaLoad(comSchemaURI)
+	jSchema := schemaLoad(jSchemaURI)
+	outSchema := schemaLoad(outfSchemaURI)
+	shipSchema := schemaLoad(shipSchemaURI)
+
+	if e != nil {
+		return nil, e
+	}
+
+	return &Uploader{header, bmSchema, comSchema, jSchema, outSchema,
+		shipSchema}, nil
 }
 
 func generateSchema(schemaType int) (schema string, err error) {
@@ -70,8 +109,7 @@ func generateHeader(uploaderID string, softwareName string,
 	newHeader.SoftwareVersion = softwareVersion
 
 	// Unsure if this is valid.
-	UTCTime := time.Now().UTC()
-	newHeader.GatewayTimestamp = UTCTime.String()
+	newHeader.GatewayTimestamp = GenerateUTCDateTime()
 
 	return newHeader, nil
 }
@@ -79,8 +117,15 @@ func generateHeader(uploaderID string, softwareName string,
 // Updates the header to the current time.  Nothing else really needs to
 // change.
 func (uploader *Uploader) updateHeader() {
+	uploader.header.GatewayTimestamp = GenerateUTCDateTime()
+}
+
+// GenerateUTCDateTime is a helper function for generating RFC3339Nano time
+// strings.
+func GenerateUTCDateTime() (timeString string) {
 	UTCTime := time.Now().UTC()
-	uploader.header.GatewayTimestamp = UTCTime.String()
+
+	return UTCTime.Format(time.RFC3339Nano)
 }
 
 func checkResponse(body io.ReadCloser) (err error) {
@@ -94,14 +139,12 @@ func checkResponse(body io.ReadCloser) (err error) {
 	return nil
 }
 
-func sendMessage(msg interface{}) (err error) {
+func (uploader *Uploader) sendMessage(msg interface{}) (err error) {
 	jsonData, err := json.Marshal(msg)
 
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("JSON: %s\n", string(jsonData))
 
 	buf := bytes.NewBuffer(jsonData)
 
@@ -115,6 +158,27 @@ func sendMessage(msg interface{}) (err error) {
 	defer resp.Body.Close()
 
 	return checkResponse(resp.Body)
+}
+
+func validateMessage(schema *gojsonschema.Schema, data interface{}) (err error) {
+	loader := gojsonschema.NewGoLoader(data)
+	result, err := schema.Validate(loader)
+
+	if err != nil {
+		return err
+	}
+
+	if !result.Valid() {
+		log.Printf("The document is not valid. see errors :\n")
+		for _, err := range result.Errors() {
+			// Err implements the ResultError interface
+			log.Printf("- %s\n", err)
+		}
+
+		return errors.New("error validating message")
+	}
+
+	return nil
 }
 
 // SendBlackmarket sends a blackmarket message to the EDDN servers.  The
@@ -131,7 +195,11 @@ func (uploader *Uploader) SendBlackmarket(msg *BlackmarketMessage) (err error) {
 
 	data := &Blackmarket{schema, uploader.header, *msg}
 
-	return sendMessage(data)
+	if err = validateMessage(uploader.blackmarketSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
 }
 
 // SendCommodity sends a commodity message to the EDDN servers.  The
@@ -148,7 +216,11 @@ func (uploader *Uploader) SendCommodity(msg *CommodityMessage) (err error) {
 
 	data := &Commodity{schema, uploader.header, *msg}
 
-	return sendMessage(data)
+	if err = validateMessage(uploader.commoditySchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
 }
 
 // SendJournal sends a journal message to the EDDN servers.  The
@@ -165,7 +237,11 @@ func (uploader *Uploader) SendJournal(msg *JournalMessage) (err error) {
 
 	data := &Journal{schema, uploader.header, *msg}
 
-	return sendMessage(data)
+	if err = validateMessage(uploader.journalSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
 }
 
 // SendOutfitting sends a outfitting message to the EDDN servers.  The
@@ -182,7 +258,11 @@ func (uploader *Uploader) SendOutfitting(msg *OutfittingMessage) (err error) {
 
 	data := &Outfitting{schema, uploader.header, *msg}
 
-	return sendMessage(data)
+	if err = validateMessage(uploader.outfittingSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
 }
 
 // SendShipyard sends a shipyard message to the EDDN servers.  The
@@ -199,5 +279,9 @@ func (uploader *Uploader) SendShipyard(msg *ShipyardMessage) (err error) {
 
 	data := &Shipyard{schema, uploader.header, *msg}
 
-	return sendMessage(data)
+	if err = validateMessage(uploader.shipyardSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
 }
