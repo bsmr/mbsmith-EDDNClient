@@ -125,14 +125,14 @@ func (uploader *Uploader) updateHeader() {
 func GenerateUTCDateTime() (timeString string) {
 	UTCTime := time.Now().UTC()
 
-	return UTCTime.Format(time.RFC3339Nano)
+	return UTCTime.Format(time.RFC3339)
 }
 
 func checkResponse(body io.ReadCloser) (err error) {
 	output, _ := ioutil.ReadAll(body)
 
 	if string(output) != "OK" {
-		errStr := fmt.Sprintf("Error sending blackmarket data: %s\n", output)
+		errStr := fmt.Sprintf("Error sending data: %s\n", output)
 		return errors.New(errStr)
 	}
 
@@ -223,10 +223,73 @@ func (uploader *Uploader) SendCommodity(msg *CommodityMessage) (err error) {
 	return uploader.sendMessage(data)
 }
 
-// SendJournal sends a journal message to the EDDN servers.  The
+// SendJournalDocked sends a Docked message to the EDDN servers.  The
 // message should be filled (especially the required fields).  The required
 // fields are marked in the journal.go source file.
-func (uploader *Uploader) SendJournal(msg *JournalMessage) (err error) {
+func (uploader *Uploader) SendJournalDocked(msg *JournalDocked) (err error) {
+	schema, err := generateSchema(journalSchema)
+
+	if err != nil {
+		return err
+	}
+
+	uploader.updateHeader()
+
+	data := &Journal{schema, uploader.header, *msg}
+
+	if err = validateMessage(uploader.journalSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
+}
+
+// SendJournalFSDJump sends a FSDJump message to the EDDN servers.  The
+// message should be filled (especially the required fields).  The required
+// fields are marked in the journal.go source file.
+func (uploader *Uploader) SendJournalFSDJump(msg *JournalFSDJump) (err error) {
+	schema, err := generateSchema(journalSchema)
+
+	if err != nil {
+		return err
+	}
+
+	uploader.updateHeader()
+
+	data := &Journal{schema, uploader.header, *msg}
+
+	if err = validateMessage(uploader.journalSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
+}
+
+// SendJournalScanStar sends a star Scan message to the EDDN servers.  The
+// message should be filled (especially the required fields).  The required
+// fields are marked in the journal.go source file.
+func (uploader *Uploader) SendJournalScanStar(msg *JournalScanStar) (err error) {
+	schema, err := generateSchema(journalSchema)
+
+	if err != nil {
+		return err
+	}
+
+	uploader.updateHeader()
+
+	data := &Journal{schema, uploader.header, *msg}
+
+	if err = validateMessage(uploader.journalSchema, data); err != nil {
+		return err
+	}
+
+	return uploader.sendMessage(data)
+}
+
+// SendJournalScanPlanet sends a planet Scan message to the EDDN servers.  The
+// message should be filled (especially the required fields).  The required
+// fields are marked in the journal.go source file.
+func (uploader *Uploader) SendJournalScanPlanet(msg *JournalScanPlanet) (err error) {
 	schema, err := generateSchema(journalSchema)
 
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"io/ioutil"
 	"strings"
 )
@@ -25,6 +26,67 @@ type Header struct {
 	SoftwareName     string `json:"softwareName"`               // Software that sent the data
 	SoftwareVersion  string `json:"softwareVersion"`            // Software version
 	UploaderID       string `json:"uploaderID"`                 // ID of the uploader
+}
+
+func handleJournalMessage(msg interface{}) (out interface{}, err error) {
+
+	if journalMsg, ok := msg.(map[string]interface{}); ok {
+
+		if event, ok := journalMsg["event"]; ok {
+
+			switch event {
+			case "FSDJump":
+				var jumpMsg JournalFSDJump
+				err := mapstructure.Decode(journalMsg, &jumpMsg)
+
+				if err != nil {
+					return nil, err
+				}
+
+				return jumpMsg, nil
+
+			case "Docked":
+				var dockedMsg JournalDocked
+				err := mapstructure.Decode(journalMsg, &dockedMsg)
+
+				if err != nil {
+					return nil, err
+				}
+
+				return dockedMsg, nil
+
+			case "Scan":
+				// Check if it's a star, or a body.
+				if _, ok := journalMsg["StarType"]; ok {
+					var scanMsg JournalScanStar
+					err := mapstructure.Decode(journalMsg, &scanMsg)
+
+					if err != nil {
+						return nil, err
+					}
+
+					return scanMsg, nil
+				}
+
+				// We have a body
+				var scanMsg JournalScanPlanet
+				err := mapstructure.Decode(journalMsg, &scanMsg)
+
+				if err != nil {
+					return nil, err
+				}
+
+				return scanMsg, nil
+
+			default:
+				return nil, errors.New("invalid event, or event not found")
+			}
+
+		}
+
+	}
+
+	return nil, errors.New("msg is not a Journal type")
 }
 
 func parseJSON(data string) (parsed interface{}, err error) {
@@ -64,6 +126,15 @@ func parseJSON(data string) (parsed interface{}, err error) {
 	case "http://schemas.elite-markets.net/eddn/journal/1":
 		var journalData Journal
 		json.Unmarshal(output, &journalData)
+
+		parsedMsg, err := handleJournalMessage(journalData.Message)
+
+		if err != nil {
+			return nil, err
+		}
+
+		journalData.Message = parsedMsg
+
 		return journalData, nil
 
 	case "http://schemas.elite-markets.net/eddn/outfitting/1":

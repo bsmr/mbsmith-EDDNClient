@@ -5,22 +5,20 @@ import (
 	"log"
 )
 
-var blackmarketMessage *eddn.BlackmarketMessage = &eddn.BlackmarketMessage{"foo", true, 500, "nelder", "wangal", "2017-04-20T14:17:57.975641Z"}
-
-func ExampleSendJournal() {
+func ExampleSendJournalFSDJump() {
 	uploader, err := eddn.NewUploader("me", "mysoftware", "1.0")
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	journalMsg := &eddn.JournalMessage{
+	journalMsg := &eddn.JournalFSDJump{
 		Event:      "FSDJump",
 		StarPos:    []float64{33.3, 33.4, 33.5},
 		StarSystem: "none",
-		Timestamp:  "2017-04-20T14:17:57.975641Z"}
+		Timestamp:  eddn.GenerateUTCDateTime()}
 
-	err = uploader.SendJournal(journalMsg)
+	err = uploader.SendJournalFSDJump(journalMsg)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -35,6 +33,14 @@ func ExampleSendBlackmarket() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	blackmarketMessage := &eddn.BlackmarketMessage{
+		Name:        "usscargoblackbox",
+		Prohibited:  false,
+		SellPrice:   1806,
+		SystemName:  "Pleione",
+		StationName: "Stargazer",
+		Timestamp:   eddn.GenerateUTCDateTime()}
 
 	err = uploader.SendBlackmarket(blackmarketMessage)
 

@@ -3,6 +3,7 @@ package EDDNClient
 import (
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
+	"log"
 	"time"
 )
 
@@ -30,15 +31,20 @@ const (
 // and OutfittingChan each only send messages pertaining to their
 // respective types.  When a Done message is received all processing on the
 // receiver should halt as this means that the ChannelInterface is closed.
+//
+// It should be noted that the Journal channel can send several types that
+// must be asserted by the caller.  While this may be a bit tedious it
+// does provide type correctness, and allows the caller to know precisely
+// what data was provided by EDDN.
 type ChannelInterface struct {
 	Socket          *zmq.Socket        // Underlying ZeroMQ socket
-	JournalChan     <-chan Journal     // Channel for reading journal messages
+	JournalChan     <-chan Journal     // Channel for journal messages. (Provides many message										  // types.
 	ShipyardChan    <-chan Shipyard    // Channel for reading shipyard messages
 	CommodityChan   <-chan Commodity   // Channel for reading commodity messages
 	BlackmarketChan <-chan Blackmarket // Channel for reading blackmarket messages
 	OutfittingChan  <-chan Outfitting  // Channel for reading outfitting messages
-	ControlChan     chan<- int         // Channel providing control of the goroutine
-	Done            chan bool          // Sent when the ChannelInterface is finished.
+	ControlChan     chan<- int         // Channel providing goroutine control
+	Done            chan bool          // Sent when the ChannelInterface is done.
 }
 
 // NewChannelInterface creates an active ChannelInterface using the provided
@@ -60,6 +66,7 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 	subscriber.Connect(EDDNSubAddress)
 	subscriber.SetSubscribe("")
 	subscriber.SetConnectTimeout(time.Duration(600000))
+	subscriber.SetHeartbeatIvl(500 * time.Millisecond)
 
 	journalChan := make(chan Journal)
 	shipyardChan := make(chan Shipyard)
@@ -95,6 +102,7 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 
 			if err != nil {
 				fmt.Printf("Error: %v", err)
+				log.Fatalln(err)
 				continue
 			}
 

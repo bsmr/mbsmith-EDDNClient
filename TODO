@@ -4,3 +4,6 @@
 - Write some tests!
 
 - Handle cases of previous versions of schemas
+
+- Refactor ChannelInterface.  The everything in the NewChannelInterface
+  seems kind of dirty.  Can definitely be split up.
