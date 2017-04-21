@@ -93,9 +93,6 @@ func handleConnections(channelInterface *eddn.ChannelInterface) {
 		case shipMessage := <-channelInterface.ShipyardChan:
 			b, _ := json.Marshal(shipMessage)
 			output(b)
-
-		default:
-			// NOOP
 		}
 	}
 }

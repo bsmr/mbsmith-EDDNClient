@@ -11,3 +11,12 @@ A Go interface to [EDDN](https://github.com/jamesremuscat/EDDN).
 
  * [package help](https://godoc.org/github.com/mbsmith/EDDNClient)
 
+## Special Thanks
+ Just some gratitude to those that have helped me navigate this ever growing
+ eco-system along the way!
+
+ * [Elite Community Developers](https://edcd.github.io/) thanks for the many
+   insights.
+
+   Their [discord](https://discord.gg/0uwCh6R62aQ0eeAX) is quite friendly, and
+   helpful as well.
