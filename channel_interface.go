@@ -38,7 +38,7 @@ const (
 // what data was provided by EDDN.
 type ChannelInterface struct {
 	Socket          *zmq.Socket        // Underlying ZeroMQ socket
-	JournalChan     <-chan Journal     // Channel for journal messages. (Provides many message										  // types.
+	JournalChan     <-chan Journal     // Channel for journal messages. (Provides many message types.)
 	ShipyardChan    <-chan Shipyard    // Channel for reading shipyard messages
 	CommodityChan   <-chan Commodity   // Channel for reading commodity messages
 	BlackmarketChan <-chan Blackmarket // Channel for reading blackmarket messages
@@ -67,6 +67,7 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 	subscriber.SetSubscribe("")
 	subscriber.SetConnectTimeout(time.Duration(600000))
 	subscriber.SetHeartbeatIvl(500 * time.Millisecond)
+	subscriber.SetTcpKeepalive(1)
 
 	journalChan := make(chan Journal)
 	shipyardChan := make(chan Shipyard)
@@ -145,6 +146,7 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 				}
 
 			default:
+				// Probably an invalid, or test schema.  Silently disregard.
 				continue
 			}
 		}

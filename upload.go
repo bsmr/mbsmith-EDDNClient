@@ -85,15 +85,15 @@ func generateSchema(schemaType int) (schema string, err error) {
 
 	switch schemaType {
 	case blackmarketSchema:
-		return "http://schemas.elite-markets.net/eddn/blackmarket/1/test", nil
+		return "http://schemas.elite-markets.net/eddn/blackmarket/1", nil
 	case commoditySchema:
-		return "http://schemas.elite-markets.net/eddn/commodity/3/test", nil
+		return "http://schemas.elite-markets.net/eddn/commodity/3", nil
 	case journalSchema:
-		return "http://schemas.elite-markets.net/eddn/journal/1/test", nil
+		return "http://schemas.elite-markets.net/eddn/journal/1", nil
 	case outfittingSchema:
-		return "http://schemas.elite-markets.net/eddn/outfitting/2/test", nil
+		return "http://schemas.elite-markets.net/eddn/outfitting/2", nil
 	case shipyardSchema:
-		return "http://schemas.elite-markets.net/eddn/shipyard/2/test", nil
+		return "http://schemas.elite-markets.net/eddn/shipyard/2", nil
 	default:
 		return "", errors.New("Invalid schema provided")
 	}

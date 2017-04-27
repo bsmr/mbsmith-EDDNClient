@@ -89,6 +89,8 @@ func handleJournalMessage(msg interface{}) (out interface{}, err error) {
 	return nil, errors.New("msg is not a Journal type")
 }
 
+// Note that if a test schema is encountered that this will not return an
+// error, but an empty string.
 func parseJSON(data string) (parsed interface{}, err error) {
 	r, _ := zlib.NewReader(strings.NewReader(data))
 	defer r.Close()
@@ -159,6 +161,18 @@ func parseJSON(data string) (parsed interface{}, err error) {
 		var shipyardData Shipyard
 		json.Unmarshal(output, &shipyardData)
 		return shipyardData, nil
+
+		// Handle special cases with test.  Disregard these.
+	case "http://schemas.elite-markets.net/eddn/shipyard/2/test":
+		fallthrough
+	case "http://schemas.elite-markets.net/eddn/blackmarket/1/test":
+		fallthrough
+	case "http://schemas.elite-markets.net/eddn/outfitting/2/test":
+		fallthrough
+	case "http://schemas.elite-markets.net/eddn/journal/1/test":
+		fallthrough
+	case "http://schemas.elite-markets.net/eddn/commodity/3/test":
+		return "", nil
 
 	default:
 		err := fmt.Errorf("unhandled schema: '%s'", jsonData.SchemaRef)
