@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+var (
+	errUnhandledSchema = errors.New("schema not supported")
+)
+
 // Root is the root of every JSON message received from EDDN.  This should
 // not be used directly as this is lazily parsed to find the schema first.
 type Root struct {
@@ -89,8 +93,6 @@ func handleJournalMessage(msg interface{}) (out interface{}, err error) {
 	return nil, errors.New("msg is not a Journal type")
 }
 
-// Note that if a test schema is encountered that this will not return an
-// error, but an empty string.
 func parseJSON(data string) (parsed interface{}, err error) {
 	r, _ := zlib.NewReader(strings.NewReader(data))
 	defer r.Close()
@@ -172,11 +174,10 @@ func parseJSON(data string) (parsed interface{}, err error) {
 	case "http://schemas.elite-markets.net/eddn/journal/1/test":
 		fallthrough
 	case "http://schemas.elite-markets.net/eddn/commodity/3/test":
-		return "", nil
+		fallthrough
 
 	default:
-		err := fmt.Errorf("unhandled schema: '%s'", jsonData.SchemaRef)
-		return nil, err
+		return nil, errUnhandledSchema
 	}
 
 }

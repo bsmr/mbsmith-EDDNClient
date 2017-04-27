@@ -109,7 +109,7 @@ func NewChannelInterface(filter int) (channels *ChannelInterface, err error) {
 
 			Message, err := parseJSON(eddnData)
 
-			if err != nil {
+			if err != nil && err != errUnhandledSchema {
 				fmt.Printf("Error: %v", err)
 				continue
 			}
